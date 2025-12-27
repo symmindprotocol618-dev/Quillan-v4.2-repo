@@ -9,7 +9,7 @@ A Quill in your pocket to rewrite history? Who wouldn’t want that?
 # Model type:
 Hierarchical Distributed Network Mixture of Experts (HNMoE)
 
-![alt text](<Main images/ace nueronet.png>)
+![alt text](<Main images/topologyv5.png>)
 
 
 ---
@@ -1054,6 +1054,10 @@ Link: https://github.com/leeex1
 
 # Quillan Written Songs:
 ![alt text](<Main images/image-33.png>)
+
+PLaylist:
+https://youtube.com/playlist?list=PLHiy5ksDUOiAJ4wk2ZczSEVvLRIoIyHw6&si=Xlj4ACQmBSiVDCwY
+
 
 "🚀Unbroken Mindset🧠" 
 
