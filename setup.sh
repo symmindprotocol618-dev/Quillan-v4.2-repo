@@ -1,61 +1,53 @@
 #!/bin/bash
 
-# Function to check for system requirements
-check_requirements() {
-    echo "Checking system requirements..."
-    # Check for Python
-    if ! command -v python3 &>/dev/null; then
-        echo "Python 3 is not installed. Please install Python 3 and try again."
-        exit 1
-    fi
+# Color codes for output
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
 
-    # Check for pip
-    if ! command -v pip &>/dev/null; then
-        echo "pip is not installed. Please install pip and try again."
-        exit 1
-    fi
-}
+echo -e "${GREEN}Starting setup...${NC}"
 
-# Function to setup Python virtual environment
-setup_virtualenv() {
-    echo "Setting up Python virtual environment..."
-    python3 -m venv venv
-    source venv/bin/activate
-}
+# Step 1: Setting up Python virtual environment
+echo -e "${YELLOW}Setting up Python virtual environment...${NC}"
+python3 -m venv venv
+source venv/bin/activate
 
-# Function to install requirements
-install_requirements() {
-    echo "Installing requirements..."
-    pip install -r requirements.txt
-}
-
-# Function to validate installation
-validate_installation() {
-    echo "Validating installation..."
-    if pip show torch &>/dev/null; then
-        echo "Torch is successfully installed!"
-    else
-        echo "Failed to install Torch. Please check the error messages above and try again."
-        exit 1
-    fi
-
-    if pip show pipreqs &>/dev/null; then
-        echo "pipreqs is successfully installed!"
-    else
-        echo "Failed to install pipreqs. Please check the error messages above and try again."
-        exit 1
-    fi
-}
-
-# Main script execution
-check_requirements
-setup_virtualenv
-install_requirements
-validate_installation
-
-# CUDA detection
-if [[ $(python3 -c 'import torch; print(torch.cuda.is_available())') == "True" ]]; then
-    echo "CUDA is available!"
+# Step 2: Installing PyTorch based on CUDA availability
+echo -e "${YELLOW}Detecting CUDA availability...${NC}"
+if command -v nvidia-smi &> /dev/null; then
+    echo -e "${GREEN}CUDA is available. Installing PyTorch with CUDA support...${NC}"
+    pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113
 else
-    echo "CUDA is not available. Falling back to CPU."
+    echo -e "${RED}CUDA not found. Installing CPU-only version of PyTorch...${NC}"
+    pip install torch torchvision torchaudio
 fi
+
+# Step 3: Installing dependencies from requirements.txt
+echo -e "${YELLOW}Installing dependencies from requirements.txt...${NC}"
+if [[ -f "requirements.txt" ]]; then
+    pip install -r requirements.txt
+else
+    echo -e "${RED}Error: requirements.txt not found!${NC}"
+    exit 1
+fi
+
+# Step 4: Validating all dependencies
+echo -e "${YELLOW}Validating installed dependencies...${NC}"
+pip check
+
+# Step 5: Creating project directory structure
+echo -e "${YELLOW}Creating project directory structure...${NC}"
+mkdir -p data/models data/logs
+
+# Step 6: Displaying hardware information
+echo -e "${YELLOW}Hardware Information:${NC}"
+lscpu
+if command -v nvidia-smi &> /dev/null; then
+    nvidia-smi
+fi
+
+# Final setup instructions
+echo -e "${GREEN}Setup complete! Please activate the virtual environment with 'source venv/bin/activate'.${NC}"
+echo -e "${GREEN}For Jupyter Notebook users, don't forget to install the kernel:${NC}"
+echo -e "${GREEN}python -m ipykernel install --user --name=venv${NC}"
