@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+# superforge.py — Cathedral-OS V1.2 SuperForge with Agentic Bootloader
+
+import os
+import sys
+import json
+import subprocess
+
+CYAN = '\033[0;36m'
+GREEN = '\033[0;32m'
+RED = '\033[0;31m'
+YELLOW = '\033[1;33m'
+NC = '\033[0m'  # No Color
+
+def print_ok(msg):
+    print(f"{GREEN}[OK]{NC} {msg}")
+
+def print_warn(msg):
+    print(f"{YELLOW}[WARN]{NC} {msg}")
+
+def print_fatal(msg):
+    print(f"{RED}[FATAL]{NC} {msg}")
+    sys.exit(1)
+
+def mkdir_p(path):
+    os.makedirs(path, exist_ok=True)
+
+def touch_file(path, content="", executable=False):
+    with open(path, "w") as f:
+        f.write(content)
+    if executable:
+        os.chmod(path, 0o755)
+
+def init_git(remote_url=None):
+    if not os.path.isdir(".git"):
+        subprocess.run(["git", "init"], check=True)
+        print_ok("Git repository initialized")
+    else:
+        print_ok("Git repository already exists")
+    subprocess.run(["git", "add", "."], check=True)
+    subprocess.run(["git", "commit", "-m", "Day Zero scaffold — Cathedral-OS V1.2"], check=True)
+    print_ok("Initial commit created")
+    if remote_url:
+        subprocess.run(["git", "remote", "add", "origin", remote_url], check=False)
+        subprocess.run(["git", "branch", "-M", "main"], check=True)
+        subprocess.run(["git", "push", "-u", "origin", "main"], check=True)
+        print_ok("Pushed to GitHub")
+
+def scaffold_repo():
+    print(f"{CYAN}🕊️ Scaffolding Cathedral-OS V1.2 repository...{NC}")
+
+    dirs = [
+        ".claude/skills",
+        ".github/workflows",
+        "core",
+        "deployment",
+        "docs",
+        "hardware",
+        "ledger",
+        "mesh",
+        "orchestration",
+        "scripts",
+        "simulation",
+        "tests",
+        "ui/oversight/praxis_v2"
+    ]
+
+    for d in dirs:
+        mkdir_p(d)
+
+    # CLAUDE.md
+    claude_content = (
+        "# CLAUDE.md — Global Constitution & ASL-2 Safety Invariants\n"
+        "Delta Risk Threshold: 0.32\n"
+    )
+    touch_file("CLAUDE.md", claude_content)
+
+    # AGENTS.md
+    agents_content = (
+        "# AGENTS.md — Root Agent Workflow\n"
+        "Route tasks to sub-agents: /agents/postmortem, /hardware, /mesh\n"
+    )
+    touch_file("AGENTS.md", agents_content)
+
+    # SKILL.md
+    skill_content = (
+        "# SKILL.md — Progressive Disclosure\n"
+        "All procedural knowledge loaded in stages; access verified by Root Agent.\n"
+    )
+    touch_file(".claude/skills/SKILL.md", skill_content)
+
+    # Synthetic cycle summary
+    synthetic_summary = {
+        "cycle": 0,
+        "status": "bootstrapped",
+        "hash": "00000000000000000000000000000000"
+    }
+    touch_file("synthetic_cycle_summary.json", json.dumps(synthetic_summary, indent=4))
+
+    # Tests placeholders
+    for i in range(8):
+        phase_name = f"phase{i}_preflight.py" if i==0 else f"phase{i}_simulation.py"
+        test_path = f"tests/{phase_name}"
+        touch_file(test_path, f"print('[OK] Phase {i} stub executed')\nsys.exit(0)\n")
+
+    # README, pyproject, requirements, env
+    touch_file("README.md", "# Cathedral-OS V1.2 — Day Zero Scaffold\n")
+    touch_file("pyproject.toml", "[tool.poetry]\nname = 'cathedral-os'\nversion = '1.2.0'\n")
+    touch_file("requirements.txt", "# Add Python dependencies here\n")
+    touch_file(".env.example", "# Environment variables (API keys, DRY_RUN toggles)\n")
+
+    # run_all_tests.sh
+    run_all_tests_content = """#!/bin/bash
+set -euo pipefail
+
+CYAN='\\033[0;36m'
+GREEN='\\033[0;32m'
+RED='\\033[0;31m'
+YELLOW='\\033[1;33m'
+NC='\\033[0m'
+
+echo -e "${CYAN}🕊️ Cathedral-OS V1.2 Agentic Integration Sequence Starting${NC}"
+
+LOG_DIR=logs
+mkdir -p $LOG_DIR
+
+echo -e "\\n${YELLOW}=== COGNITIVE BOOTSTRAP: AGENT & GOVERNANCE ENFORCEMENT ===${NC}"
+
+if grep -q "Delta Risk Threshold" CLAUDE.md; then
+    DELTA_RISK=$(grep "Delta Risk Threshold" CLAUDE.md | awk -F': ' '{print $2}')
+    echo -e "   ${GREEN}[OK]${NC} Delta Risk Threshold locked at: ${DELTA_RISK}"
+else
+    echo -e "   ${RED}[FATAL]${NC} Constitution corrupted. Halting boot."
+    exit 1
+fi
+
+if grep -q "Route tasks to sub-agents" AGENTS.md; then
+    echo -e "   ${GREEN}[OK]${NC} Sub-agent routing verified"
+else
+    echo -e "   ${RED}[FATAL]${NC} Root Agent delegation lost. Halting."
+    exit 1
+fi
+
+if [ -f ".claude/skills/SKILL.md" ]; then
+    echo -e "   ${GREEN}[OK]${NC} Skill boundaries loaded. Reflexion processes authorized."
+else
+    echo -e "   ${RED}[FATAL]${NC} Progressive disclosure missing. Halting."
+    exit 1
+fi
+
+echo -e "${YELLOW}=== INITIATING PHASE EXECUTION ===${NC}\\n"
+
+for i in {0..7}; do
+    echo "🔹 Phase $i stub execution"
+    python3 tests/phase${i}_preflight.py || python3 tests/phase${i}_simulation.py | tee $LOG_DIR/phase${i}.log
+done
+
+echo -e "\\n${GREEN}✅ Cathedral-OS V1.2 Integration Sequence Complete.${NC}"
+"""
+    touch_file("run_all_tests.sh", run_all_tests_content, executable=True)
+    print_ok("Agentic Bootloader script created")
+
+    # Minimal GitHub Actions workflow
+    workflow_content = (
+        "name: V1.2 Release\n"
+        "on:\n"
+        "  pull_request:\n"
+        "    branches: [ main ]\n"
+        "jobs:\n"
+        "  build:\n"
+        "    runs-on: ubuntu-latest\n"
+        "    steps:\n"
+        "      - uses: actions/checkout@v3\n"
+        "      - name: Set up Python\n"
+        "        uses: actions/setup-python@v4\n"
+        "        with:\n"
+        "          python-version: '3.11'\n"
+        "      - name: Install dependencies\n"
+        "        run: |\n"
+        "          python -m pip install --upgrade pip\n"
+        "          pip install -r requirements.txt\n"
+        "      - name: Run Agentic Bootloader\n"
+        "        run: bash run_all_tests.sh\n"
+    )
+    touch_file(".github/workflows/v1_2_release.yml", workflow_content)
+    print_ok("GitHub Actions workflow created")
+
+def main():
+    scaffold_repo()
+    remote_url = input("Enter GitHub repository URL to push (or leave blank to skip): ").strip()
+    if remote_url == "":
+        remote_url = None
+    init_git(remote_url)
+    print(f"{GREEN}✅ Cathedral-OS V1.2 SuperForge complete! Bootloader & CI/CD ready.{NC}")
+
+if __name__ == "__main__":
+    main()
+
+chmod +x superforge.py
+./superforge.py
